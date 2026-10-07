@@ -1,0 +1,68 @@
+import type { ProjectRow } from "@/db/schema";
+import type { ProjectInput } from "@/lib/validation";
+
+export function projectToInput(p: ProjectRow): ProjectInput {
+  return {
+    slug: p.slug,
+    code: p.code,
+    title: p.title,
+    tagline: p.tagline,
+    summary: p.summary,
+    role: p.role,
+    timeframe: p.timeframe,
+    stage: p.stage,
+    visibility: p.visibility,
+    featured: p.featured,
+    sortOrder: p.sortOrder,
+    domains: p.domains,
+    stack: p.stack,
+    coverage: p.coverage,
+    problem: p.problem,
+    built: p.built,
+    diagram: p.diagram,
+    decisions: p.decisions,
+    challenges: p.challenges,
+    security: p.security,
+    testing: p.testing,
+    outcomes: p.outcomes,
+    evidence: p.evidence,
+    links: p.links,
+    coverMediaId: p.coverMediaId,
+    seoTitle: p.seoTitle,
+    seoDescription: p.seoDescription,
+    needsReview: p.needsReview,
+  };
+}
+
+export function emptyProject(code: string, sortOrder: number, stage: ProjectInput["stage"]): ProjectInput {
+  return {
+    slug: "",
+    code,
+    title: "",
+    tagline: "",
+    summary: "",
+    role: "",
+    timeframe: "",
+    stage,
+    visibility: stage === "upcoming" ? "published" : "draft",
+    featured: false,
+    sortOrder,
+    domains: [],
+    stack: [],
+    coverage: {},
+    problem: "",
+    built: "",
+    diagram: { layers: [], nodes: [], edges: [] },
+    decisions: [],
+    challenges: [],
+    security: "",
+    testing: "",
+    outcomes: "",
+    evidence: [],
+    links: [],
+    coverMediaId: null,
+    seoTitle: "",
+    seoDescription: "",
+    needsReview: false,
+  };
+}

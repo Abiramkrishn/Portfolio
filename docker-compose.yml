@@ -1,0 +1,61 @@
+# Local development:   docker compose up -d db
+# Production-style run (VPS): see README → "Deploy on a VPS with Docker".
+#
+# Postgres is only published on 127.0.0.1 — never expose it to the internet.
+# Set POSTGRES_PASSWORD in your shell or a .env file for anything beyond local development.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-portfolio}
+      POSTGRES_DB: portfolio
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-off jobs:
+  #   docker compose --profile app run --rm migrate
+  #   docker compose --profile app run --rm migrate npm run db:seed
+  migrate:
+    profiles: ["app"]
+    build:
+      context: .
+      target: migrator
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://portfolio:${POSTGRES_PASSWORD:-portfolio}@db:5432/portfolio
+
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+      target: run
+      # Pages are prerendered at build time, so the build reaches the (already migrated)
+      # database through the host's loopback port.
+      network: host
+      args:
+        BUILD_DATABASE_URL: ${BUILD_DATABASE_URL:-postgres://portfolio:portfolio@127.0.0.1:5433/portfolio}
+        SITE_URL: ${SITE_URL:-http://localhost:3000}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://portfolio:${POSTGRES_PASSWORD:-portfolio}@db:5432/portfolio
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  pgdata:
