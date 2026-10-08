@@ -43,7 +43,7 @@ export function ProfileCard({
         </div>
         <div className={cx(compactUntil ? "lg:px-2 lg:pt-4 lg:pb-3" : "px-2 pt-4 pb-3")}>
           <p className="text-[1.05rem] font-semibold tracking-[-0.01em] text-ink">{site.name}</p>
-          <p className="mt-0.5 text-[0.88rem] text-ink-3">{site.role}</p>
+          <p className="mt-0.5 text-[0.88rem] text-balance text-ink-3">{site.role}</p>
         </div>
       </div>
       {children ? <div className="mx-2 mt-2 border-t border-rule lg:mt-0">{children}</div> : null}

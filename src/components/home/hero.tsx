@@ -8,11 +8,9 @@ import { ProfileCard, ProfileRow } from "@/components/site/portrait";
 export function Hero({ settings }: { settings: SiteSettings }) {
   const spec: [string, string][] = [
     ["Builds", "AI systems, SaaS, integrations, automation"],
-    ["Breaks", "Web apps, APIs, infrastructure"],
+    ["Engineers", "Web apps, APIs, backend systems"],
+    ["Secures", "Applications, APIs, workflows, infrastructure"],
   ];
-  if (settings.location || settings.timezone) {
-    spec.push(["Based", [settings.location, settings.timezone].filter(Boolean).join(" · ")]);
-  }
 
   return (
     <section aria-labelledby="hero-title" className="overflow-hidden">

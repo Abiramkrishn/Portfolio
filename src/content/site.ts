@@ -7,7 +7,7 @@ import type { StageKey } from "@/lib/types";
 export const site = {
   name: "Abiram Krishn",
   initials: "AK",
-  role: "Independent systems engineer",
+  role: "Independent Software & Systems Builder",
   descriptor: "Systems engineer for AI, SaaS, integrations and security",
   description:
     "Abiram Krishn builds complete software systems (AI applications, SaaS products, integrations and automation) and tests them like an attacker before they ship.",
