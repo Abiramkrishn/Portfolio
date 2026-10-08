@@ -2,7 +2,9 @@ import "server-only";
 import sharp from "sharp";
 import { sha256 } from "./crypto";
 
-export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+// Vercel functions refuse request bodies over 4.5 MB, so uploads there stop at 4 MB.
+export const MAX_UPLOAD_MB = process.env.VERCEL ? 4 : 8;
+export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 const ACCEPTED = new Set(["jpeg", "png", "webp", "avif", "gif", "tiff", "heif"]);
 
 export class MediaError extends Error {}
@@ -13,7 +15,7 @@ export class MediaError extends Error {}
  * SVG is refused outright: it is a document that can carry script, not an image.
  */
 export async function processImage(input: Buffer) {
-  if (input.byteLength > MAX_UPLOAD_BYTES) throw new MediaError("Images must be 8 MB or smaller.");
+  if (input.byteLength > MAX_UPLOAD_BYTES) throw new MediaError(`Images must be ${MAX_UPLOAD_MB} MB or smaller.`);
   let meta: Awaited<ReturnType<ReturnType<typeof sharp>["metadata"]>>;
   try {
     meta = await sharp(input, { limitInputPixels: 50_000_000 }).metadata();

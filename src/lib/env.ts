@@ -1,8 +1,27 @@
 import "server-only";
 import { z } from "zod";
 
+function isLocalUrl(url: string): boolean {
+  try {
+    return ["localhost", "127.0.0.1", "[::1]", "0.0.0.0"].includes(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Public origin for canonical URLs, Open Graph and the sitemap. */
 export function siteUrl(): string {
-  return (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const explicit = process.env.SITE_URL?.replace(/\/$/, "");
+  // On Vercel, a SITE_URL copied from a local .env would point every canonical URL at localhost.
+  if (explicit && !(process.env.VERCEL && isLocalUrl(explicit))) return explicit;
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercel) return `https://${vercel}`;
+  return explicit ?? "http://localhost:3000";
+}
+
+/** A production build served somewhere other than this computer. */
+function isLiveDeployment(): boolean {
+  return process.env.NODE_ENV === "production" && !isLocalUrl(siteUrl());
 }
 
 const authSchema = z.object({
@@ -24,6 +43,12 @@ export function authEnv() {
   if (!parsed.success) {
     const fields = parsed.error.issues.map((i) => i.path.join(".")).join(", ");
     throw new Error(`Admin is not configured (${fields}). Run \`npm run admin:setup\`.`);
+  }
+  // The local development login is documented in git history; it must never guard a live site.
+  if (isLiveDeployment() && /@example\.(com|org|net)$/i.test(parsed.data.ADMIN_EMAIL)) {
+    throw new Error(
+      "ADMIN_EMAIL is still a placeholder (@example.com). Run `npm run admin:setup` with your own email and a new passphrase.",
+    );
   }
   authCache = {
     ...parsed.data,

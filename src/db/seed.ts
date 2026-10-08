@@ -1,11 +1,22 @@
 // Seed initial content. Idempotent: existing rows (matched by slug) are left alone.
 // Usage: npm run db:seed
+//        npm run db:seed -- --bootstrap   only seeds an empty database (used by deploys)
 import { db, sql } from "./client";
+import { DatabaseConfigError } from "./connection";
 import { eq } from "drizzle-orm";
 import { logEntries, projects, settings } from "./schema";
 import { seedLog, seedProjects } from "./seed-data";
 
 async function main() {
+  if (process.argv.includes("--bootstrap")) {
+    // The settings row is written last, so its presence means a seed has completed before.
+    const [existing] = await db.select({ id: settings.id }).from(settings).limit(1);
+    if (existing) {
+      console.log("Database already has content; skipping seed.");
+      return;
+    }
+  }
+
   const insertedProjects = await db
     .insert(projects)
     .values(seedProjects)
@@ -48,7 +59,9 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error(err);
+    console.error(err instanceof DatabaseConfigError ? `
+✗ ${err.message}
+` : err);
     process.exitCode = 1;
   })
   .finally(() => sql.end());

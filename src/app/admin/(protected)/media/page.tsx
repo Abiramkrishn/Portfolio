@@ -2,6 +2,7 @@ import { listMedia, mediaUsage } from "@/db/queries/admin";
 import { PageHeader, inputClass } from "@/components/admin/ui";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { UploadForm } from "@/components/admin/upload-form";
+import { MAX_UPLOAD_MB } from "@/lib/media";
 import { deleteMedia, updateAlt } from "./actions";
 
 // Per-request by design: every dashboard view reads the session and live data.
@@ -22,7 +23,7 @@ export default async function MediaAdmin() {
         </p>
       </PageHeader>
       <div className="space-y-8 px-4 py-6 md:px-8">
-        <UploadForm />
+        <UploadForm maxMb={MAX_UPLOAD_MB} />
         {items.length === 0 ? (
           <p className="text-ink-3">No images yet.</p>
         ) : (

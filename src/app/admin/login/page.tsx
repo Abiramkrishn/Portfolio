@@ -12,11 +12,11 @@ export const metadata: Metadata = { title: "Sign in" };
 export default async function LoginPage() {
   if (await getSession()) redirect("/admin");
   let totp = false;
-  let configured = true;
+  let problem: string | null = null;
   try {
     totp = Boolean(authEnv().ADMIN_TOTP_SECRET);
-  } catch {
-    configured = false;
+  } catch (err) {
+    problem = err instanceof Error ? err.message : "Admin credentials aren't set.";
   }
 
   return (
@@ -26,12 +26,11 @@ export default async function LoginPage() {
           <span className="text-signal-ink">Dashboard</span> · Restricted
         </p>
         <h1 className="headline mt-4">Sign in</h1>
-        {configured ? (
+        {!problem ? (
           <LoginForm totp={totp} />
         ) : (
           <p className="mt-6 border-l-2 border-signal bg-signal-soft px-4 py-3 text-[0.95rem]">
-            Admin credentials aren&apos;t set. Run <code className="mono">npm run admin:setup</code> and add the output
-            to your environment.
+            {problem} Add the values to your environment variables, then redeploy.
           </p>
         )}
       </div>

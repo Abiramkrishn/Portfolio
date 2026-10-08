@@ -62,10 +62,16 @@ The build prerenders public pages from the database, so **migrate before you bui
 
 ### Option A — Vercel + Neon (least maintenance)
 
-1. Create a Neon Postgres project. Use the **pooled** connection string.
-2. Import the repo into Vercel and set environment variables: `DATABASE_URL`, `DATABASE_PREPARE=false` (required for poolers), `SITE_URL=https://your-domain`, `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH_B64`, `AUTH_SECRET`, optionally `ADMIN_TOTP_SECRET` and the `SMTP_*` values.
-3. Vercel runs `npm run vercel-build`, which migrates and then builds.
-4. Seed once from your machine: `DATABASE_URL=<neon url> npm run db:seed`.
+Vercel can't reach the Docker database on your computer, so the site needs a hosted one. **Don't import your local `.env` into Vercel**: its `DATABASE_URL` points to localhost and its admin login is the local one.
+
+1. **Environment variables:** in Vercel → Project → Settings → Environment Variables, delete any `DATABASE_URL`, `DATABASE_PREPARE`, `SITE_URL`, `ADMIN_*` and `AUTH_SECRET` copied from a local `.env`.
+2. **Database:** Project → Storage → Create Database → **Neon** (Serverless Postgres) → create, then connect it to the project for all environments. It adds `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) for you. Poolers are detected automatically, so `DATABASE_PREPARE` isn't needed.
+3. **Admin login:** on your computer run `npm run admin:setup -- your@email.com "a new long passphrase" --totp` and add `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH_B64`, `AUTH_SECRET` and `ADMIN_TOTP_SECRET` to Vercel. Use a passphrase you have never used locally. A live site refuses an `@example.com` admin email.
+4. **Email (optional):** add the six `SMTP_*` / `NOTIFY_EMAIL` values from *Get briefs in Gmail* below.
+5. **Domain:** add `SITE_URL=https://your-domain` once you have one. Until then the site uses its `*.vercel.app` address.
+6. **Redeploy** (Deployments → ⋯ → Redeploy). `npm run vercel-build` applies migrations, seeds the initial content on the first deploy only (`db:seed --bootstrap`), then builds.
+
+On Vercel, image uploads are limited to 4 MB (the platform caps request bodies at 4.5 MB).
 
 ### Option B — VPS with Docker (Hostinger VPS or any Linux host)
 
@@ -114,7 +120,7 @@ The App Password is a secret: it stays out of git (`.env` is ignored), and you c
 
 ## Before you go live
 
-1. **Replace the local admin credentials** in `.env` (the dev ones are `owner@example.com` / `local-dev-passphrase-2026`) using `npm run admin:setup`.
+1. **Use new admin credentials in production.** Generate them with `npm run admin:setup` and never reuse the local login. A live deployment refuses an `@example.com` admin email.
 2. **Settings:** email, LinkedIn, GitHub, WhatsApp, location/time zone, reply-time promise.
 3. **Verify seeded content** (flagged *Review* in the dashboard). Projects SYS-001–006 were written from your own repositories (READMEs, architecture/security/evaluation docs, commit history) — confirm each is accurate and that you're happy to disclose it publicly, add screenshots and links, then clear the flag. Clients are described, not named, except Cakee (linked to its live site) — confirm you may show it. Lab entries LOG-001, 003 and 004 are complete drafts from the Vaakku docs; publish them when you're ready. LOG-002 is a skeleton.
 4. Set `SITE_URL` to the real domain (canonical URLs, sitemap, Open Graph).

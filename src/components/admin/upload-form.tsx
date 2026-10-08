@@ -5,11 +5,16 @@ import { uploadMedia, type UploadState } from "@/app/admin/(protected)/media/act
 import { buttonClass, cx } from "@/components/ui/primitives";
 import { inputClass } from "./ui";
 
-export function UploadForm() {
+export function UploadForm({ maxMb }: { maxMb: number }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [state, action, pending] = useActionState<UploadState, FormData>(async (prev, fd) => {
+    // Checked here too, so an oversized file gets this message instead of the host's upload error.
+    const file = fd.get("file");
+    if (file instanceof File && file.size > maxMb * 1024 * 1024) {
+      return { status: "error", message: `That image is over ${maxMb} MB. Export a smaller copy and try again.` };
+    }
     const result = await uploadMedia(prev, fd);
     if (result.status === "ok") {
       formRef.current?.reset();
@@ -58,7 +63,7 @@ export function UploadForm() {
               {pending ? "Processing…" : "Upload"}
             </button>
             <p aria-live="polite" className={cx("text-[0.85rem]", state.status === "error" ? "text-signal-ink" : "text-ink-3")}>
-              {state.message ?? "JPEG, PNG, WebP, AVIF or GIF, up to 8 MB."}
+              {state.message ?? `JPEG, PNG, WebP, AVIF or GIF, up to ${maxMb} MB.`}
             </p>
           </div>
         </div>
