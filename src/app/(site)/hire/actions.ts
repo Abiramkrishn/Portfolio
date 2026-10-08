@@ -1,6 +1,7 @@
 "use server";
 
 import { after } from "next/server";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { inquiries } from "@/db/schema";
 import { getSettings } from "@/db/queries/public";
@@ -8,7 +9,8 @@ import { briefSchema, fieldErrors } from "@/lib/validation";
 import { checkFormToken } from "@/lib/form-token";
 import { clientIpHash } from "@/lib/request";
 import { hit } from "@/lib/rate-limit";
-import { notifyNewInquiry } from "@/lib/mail";
+import { explainMailError, notifyNewInquiry } from "@/lib/mail";
+import type { EmailStatus } from "@/lib/types";
 
 export type BriefState = {
   status: "idle" | "ok" | "error";
@@ -67,9 +69,20 @@ export async function submitBrief(_prev: BriefState, formData: FormData): Promis
     .values({ ...parsed.data, ipHash })
     .returning({ id: inquiries.id });
 
+  // Email after the response, so the visitor never waits on the mail server.
   after(async () => {
-    const settings = await getSettings();
-    if (settings.notifyOnInquiry) await notifyNewInquiry(row.id, parsed.data);
+    let result: { status: EmailStatus; error?: string };
+    try {
+      const settings = await getSettings();
+      result = settings.notifyOnInquiry ? await notifyNewInquiry(row.id, parsed.data) : { status: "off" };
+    } catch (err) {
+      console.error("[mail] notification step failed:", err);
+      result = { status: "failed", error: explainMailError(err) };
+    }
+    await db
+      .update(inquiries)
+      .set({ emailStatus: result.status, emailError: result.error ?? "" })
+      .where(eq(inquiries.id, row.id));
   });
 
   return { status: "ok" };

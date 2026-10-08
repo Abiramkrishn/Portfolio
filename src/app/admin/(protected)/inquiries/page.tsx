@@ -54,8 +54,11 @@ export default async function InquiriesAdmin({ searchParams }: PageProps<"/admin
                       </span>
                     ) : null}
                   </span>
-                  <span>
+                  <span className="flex flex-wrap items-start gap-1.5 md:justify-end">
                     <StatusPill tone={q.status === "new" ? "signal" : q.status === "replied" ? "ok" : "muted"}>{q.status}</StatusPill>
+                    {q.emailStatus === "failed" || q.emailStatus === "not_configured" ? (
+                      <StatusPill tone="signal">email failed</StatusPill>
+                    ) : null}
                   </span>
                 </Link>
               </li>

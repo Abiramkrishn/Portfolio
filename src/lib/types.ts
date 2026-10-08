@@ -70,6 +70,9 @@ export type LogKind = (typeof LOG_KINDS)[number];
 export const INQUIRY_STATUSES = ["new", "read", "replied", "archived"] as const;
 export type InquiryStatus = (typeof INQUIRY_STATUSES)[number];
 
+/** What happened to the email notification for a brief. */
+export type EmailStatus = "pending" | "sent" | "failed" | "not_configured" | "off";
+
 export const AVAILABILITY = ["open", "limited", "closed"] as const;
 export type Availability = (typeof AVAILABILITY)[number];
 

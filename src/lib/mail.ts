@@ -2,6 +2,7 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { mailEnv, siteUrl } from "./env";
 import type { BriefInput } from "./validation";
+import type { EmailStatus } from "./types";
 import { engagements, type EngagementKey } from "@/content/site";
 
 type MailEnv = NonNullable<ReturnType<typeof mailEnv>>;
@@ -83,14 +84,17 @@ export function buildInquiryMessage(id: string, brief: BriefInput) {
   };
 }
 
-/** Best-effort email when a brief arrives. The brief is already stored; mail failure is only logged. */
-export async function notifyNewInquiry(id: string, brief: BriefInput): Promise<void> {
+/** Email a new brief. The brief is already stored; the result is recorded on it for the dashboard. */
+export async function notifyNewInquiry(id: string, brief: BriefInput): Promise<{ status: EmailStatus; error?: string }> {
   const env = mailEnv();
-  if (!env) return;
+  if (!env) return { status: "not_configured" };
   try {
     await transport(env).sendMail({ from: env.from, to: env.to, ...buildInquiryMessage(id, brief) });
+    return { status: "sent" };
   } catch (err) {
-    console.error("[mail] could not send inquiry notification:", explainMailError(err));
+    const error = explainMailError(err);
+    console.error("[mail] could not send inquiry notification:", error);
+    return { status: "failed", error };
   }
 }
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
@@ -6,7 +7,7 @@ import { inquiries } from "@/db/schema";
 import { getInquiry } from "@/db/queries/admin";
 import { engagements, type EngagementKey } from "@/content/site";
 import { INQUIRY_STATUSES } from "@/lib/types";
-import { PageHeader, StatusPill } from "@/components/admin/ui";
+import { EmailNote, PageHeader, StatusPill } from "@/components/admin/ui";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { buttonClass, cx } from "@/components/ui/primitives";
 import { ArrowLeft } from "@/components/ui/icons";
@@ -31,7 +32,7 @@ export default async function InquiryDetail({ params }: PageProps<"/admin/inquir
   }
 
   const subject = encodeURIComponent(`Re: your project brief`);
-  const rows: [string, string][] = [
+  const rows: [string, ReactNode][] = [
     ["Email", q.email],
     ["Company", q.company || "Not given"],
     ["Looking for", q.engagements.map((e) => engagements[e as EngagementKey]?.label ?? e).join(", ") || "Not given"],
@@ -39,6 +40,7 @@ export default async function InquiryDetail({ params }: PageProps<"/admin/inquir
     ["Timeline", q.timeline || "Not given"],
     ["Budget", q.budget || "Not given"],
     ["Received", q.createdAt.toLocaleString("en-GB")],
+    ["Notification", <EmailNote key="email" status={q.emailStatus} error={q.emailError} />],
   ];
 
   return (

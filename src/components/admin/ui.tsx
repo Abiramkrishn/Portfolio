@@ -102,3 +102,21 @@ export function StatusPill({ tone, children }: { tone: "signal" | "ok" | "muted"
     </span>
   );
 }
+
+const EMAIL_NOTE: Record<string, string> = {
+  sent: "Emailed to you",
+  failed: "Email failed",
+  not_configured: "Email not set up on this server",
+  off: "Email notifications are off (Settings)",
+  pending: "Not recorded",
+};
+
+/** The email-notification outcome for a brief, with the reason when it failed. */
+export function EmailNote({ status, error }: { status: string; error?: string }) {
+  return (
+    <span className={cx(status === "failed" || status === "not_configured" ? "text-signal-ink" : "text-ink-2")}>
+      {EMAIL_NOTE[status] ?? status}
+      {error ? <span className="mt-1 block text-[0.85rem] text-ink-2">{error}</span> : null}
+    </span>
+  );
+}

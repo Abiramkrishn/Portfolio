@@ -114,6 +114,9 @@ export const inquiries = pgTable(
     budget: text("budget").notNull().default(""),
     status: inquiryStatus("status").notNull().default("new"),
     ipHash: text("ip_hash").notNull().default(""),
+    /** Outcome of the email notification (EmailStatus), so a failed send shows in the dashboard. */
+    emailStatus: text("email_status").notNull().default("pending"),
+    emailError: text("email_error").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("inquiries_status_idx").on(t.status, t.createdAt)],
